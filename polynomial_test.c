@@ -15,42 +15,18 @@
 
 #include "list.h"
 
+// 项。
 typedef struct {
     long double coefficient;
     int exponent;
 } Item;
 
+// 多项式。
 typedef List Polynomial;
 
-static void add(Polynomial *poly, Item *item) {
-    if (item->coefficient == 0.0)
-        return;
-    size_t len = list_len(poly);
+static void add(Polynomial *poly, Item *item);
 
-    Item tmp;
-    for (int i = 0; i < len; i++) {
-        list_get(poly, i, &tmp);
-        if (tmp.exponent == item->exponent) {
-            long double coefficient = tmp.coefficient + item->coefficient;
-            if (coefficient != 0.0) {
-                Item newItem = {
-                        .coefficient = coefficient,
-                        .exponent = tmp.exponent,
-                };
-                list_set(poly, i, &newItem);
-            } else {
-                list_del(poly, i);
-            }
-            return;
-        } else if (tmp.exponent > item->exponent) {
-            list_insert(poly, i, item);
-            return;
-        }
-    }
-
-    list_rpush(poly, item);
-}
-
+// 新建多项式。
 Polynomial *polynomial_new(int num, ...) {
     va_list args;
     va_start(args, num);
@@ -66,10 +42,12 @@ Polynomial *polynomial_new(int num, ...) {
     return newPolynomial;
 }
 
+// 销毁多项式。
 void polynomial_free(Polynomial *poly) {
     list_free(poly);
 }
 
+// 多项式相加。
 Polynomial *polynomial_add(const Polynomial *x, const Polynomial *y) {
     Polynomial *newPolynomial = list_alloc(sizeof(Item), ListImplType_Array);
 
@@ -90,6 +68,7 @@ Polynomial *polynomial_add(const Polynomial *x, const Polynomial *y) {
     return newPolynomial;
 }
 
+// 多项式相减。
 Polynomial *polynomial_subtract(const Polynomial *x, const Polynomial *y) {
     Polynomial *newPolynomial = list_alloc(sizeof(Item), ListImplType_Array);
 
@@ -110,6 +89,7 @@ Polynomial *polynomial_subtract(const Polynomial *x, const Polynomial *y) {
     return newPolynomial;
 }
 
+// 多项式相乘。
 Polynomial *polynomial_multiply(const Polynomial *x, const Polynomial *y) {
     Polynomial *newPolynomial = list_alloc(sizeof(Item), ListImplType_Array);
 
@@ -132,6 +112,7 @@ Polynomial *polynomial_multiply(const Polynomial *x, const Polynomial *y) {
     return newPolynomial;
 }
 
+// 打印多项式。
 void polynomial_fprint(const Polynomial *poly, FILE *f) {
     size_t len = list_len(poly);
 
@@ -196,6 +177,35 @@ void polynomial_fprint(const Polynomial *poly, FILE *f) {
         }
     }
     puts("");
+}
+
+static void add(Polynomial *poly, Item *item) {
+    if (item->coefficient == 0.0)
+        return;
+    size_t len = list_len(poly);
+
+    Item tmp;
+    for (int i = 0; i < len; i++) {
+        list_get(poly, i, &tmp);
+        if (tmp.exponent == item->exponent) {
+            long double coefficient = tmp.coefficient + item->coefficient;
+            if (coefficient != 0.0) {
+                Item newItem = {
+                        .coefficient = coefficient,
+                        .exponent = tmp.exponent,
+                };
+                list_set(poly, i, &newItem);
+            } else {
+                list_del(poly, i);
+            }
+            return;
+        } else if (tmp.exponent > item->exponent) {
+            list_insert(poly, i, item);
+            return;
+        }
+    }
+
+    list_rpush(poly, item);
 }
 
 int main() {

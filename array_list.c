@@ -14,140 +14,121 @@
 
 #include "array_list.h"
 
+// 扩容阈值
 const static int ExpandThreshold = 256;
 
+// 扩容系数
 const static long double ExpandFactor = 1.25L;
 
+// 缩容系数
 const static long double ReduceFactor = 2L;
 
-static _Bool _needReduce(ArrayList *list) {
-    return list->_length > ExpandThreshold && (list->_length * ReduceFactor <= list->_capacity);
-}
+// 判断是否需要缩容
+static _Bool needReduce(ArrayList *list);
 
-static _Bool _needExpand(ArrayList *list) {
-    return list->_length >= list->_capacity;
-}
+// 判断是否需要扩容
+static _Bool needExpand(ArrayList *list);
 
-static int _expandAndInsert(ArrayList *list, int index, const void *elem) {
-    if (list->_capacity < ExpandThreshold)
-        list->_capacity += list->_capacity + 1;
-    else
-        list->_capacity = (int) ((long double) list->_capacity * ExpandFactor);
+// 扩容并插入元素
+static int expandAndInsert(ArrayList *list, size_t index, const void *elem);
 
-    void *newElems = malloc(list->_elemSize * list->_capacity);
-    if (newElems == NULL)
-        return 2;
-    if (index && list->_elems != NULL)
-        memcpy(newElems, list->_elems, list->_elemSize * index); // 复制前段
-    if ((list->_length - index) && list->_elems != NULL)
-        memcpy(newElems + (index + 1) * list->_elemSize, list->_elems + index * list->_elemSize,
-               list->_elemSize * (list->_length - index));             // 复制后段
-    memcpy(newElems + index * list->_elemSize, elem, list->_elemSize); // 设置新元素
+// 缩容并弹出元素
+static int deallocAndPop(ArrayList *list, size_t index, void *elem);
 
-    free(list->_elems);
-    list->_elems = newElems;
-    list->_length++;
-    return 0;
-}
-
-static int _deallocAndPop(ArrayList *list, int index, void *elem) {
-    if (elem != NULL)
-        memcpy(elem, list->_elems + index * list->_elemSize, list->_elemSize);
-    void *newElems = malloc(list->_elemSize * (int) (list->_length * ExpandFactor));
-    if (newElems == NULL)
-        return 2;
-    if (index)
-        memcpy(newElems, list->_elems, list->_elemSize * index); // 复制前段
-    if (list->_length - index)
-        memcpy(newElems + (index + 1) * list->_elemSize, list->_elems + index * list->_elemSize,
-               list->_elemSize * (list->_length - index)); // 复制后段
-
-    free(list->_elems);
-    list->_elems = newElems;
-    list->_length--;
-    return 0;
-}
+// 指针算术运算。
+static inline void *pointerAdd(void *p1, size_t delta);
 
 ArrayList *arrayList_alloc(size_t elemSize) {
     ArrayList *list = malloc(sizeof(ArrayList));
-    list->_elemSize = elemSize;
-    list->_length = list->_capacity = 0;
-    list->_elems = NULL;
+    list->elemSize = elemSize;
+    list->length = list->capacity = 0;
+    list->elems = NULL;
     return list;
 }
 
-int arrayList_free(ArrayList *list) {
-    free(list->_elems);
-    list->_length = list->_capacity = 0;
-    list->_elemSize = 0;
-    list->_elems = NULL;
+void arrayList_free(ArrayList *list) {
+    free(list->elems);
+    list->length = list->capacity = 0;
+    list->elemSize = 0;
+    list->elems = NULL;
     free(list);
-    return 0;
 }
 
 size_t arrayList_len(const ArrayList *list) {
-    return list->_length;
+    return list->length;
 }
 
-int arrayList_get(const ArrayList *list, int index, void *elem) {
-    if (index >= list->_length || index < 0)
+int arrayList_get(const ArrayList *list, size_t index, void *elem) {
+    if (index >= list->length)
         return 1;
-    memcpy(elem, list->_elems + index * list->_elemSize, list->_elemSize);
+    memcpy(elem, pointerAdd(list->elems, index * list->elemSize), list->elemSize);
     return 0;
 }
 
-int arrayList_insert(ArrayList *list, int index, const void *elem) {
-    if (index > list->_length || index < 0)
+int arrayList_insert(ArrayList *list, size_t index, const void *elem) {
+    if (index > list->length)
         return 1;
-    if (_needExpand(list))
-        return _expandAndInsert(list, index, elem);
 
-    if (list->_length - index)
-        memmove(list->_elems + (index + 1) * list->_elemSize, list->_elems + index * list->_elemSize,
-                list->_elemSize * (list->_length - index));                // 从index往后移动一位
-    memcpy(list->_elems + index * list->_elemSize, elem, list->_elemSize); // 复制元素
-    list->_length++;
+    // 扩容
+    if (needExpand(list))
+        return expandAndInsert(list, index, elem);
+
+    // 从index往后移动一位
+    if (list->length - index)
+        memmove(pointerAdd(list->elems, (index + 1) * list->elemSize),
+                pointerAdd(list->elems, index * list->elemSize),
+                list->elemSize * (list->length - index));
+    // 设置元素
+    memcpy(pointerAdd(list->elems, index * list->elemSize), elem, list->elemSize);
+
+    list->length++;
     return 0;
 }
 
-int arrayList_del(ArrayList *list, int index) {
-    if (index >= list->_length || index < 0)
+int arrayList_del(ArrayList *list, size_t index) {
+    if (index >= list->length)
         return 1;
-    if (_needReduce(list))
-        return _deallocAndPop(list, index, NULL);
-    if (list->_length - index - 1)
-        memmove(list->_elems + index * list->_elemSize, list->_elems + (index + 1) * list->_elemSize,
-                (list->_length - index - 1) * list->_elemSize); // 从index往前移动一位
-    list->_length--;
+
+    // 缩容
+    if (needReduce(list))
+        return deallocAndPop(list, index, NULL);
+
+    // 从index往前移动一位
+    if (list->length - index - 1)
+        memmove(pointerAdd(list->elems, index * list->elemSize),
+                pointerAdd(list->elems, (index + 1) * list->elemSize),
+                (list->length - index - 1) * list->elemSize);
+
+    list->length--;
     return 0;
 }
 
-int arrayList_locate(const ArrayList *list, ListElemComparer cmp, const void *elem, int *index) {
-    for (int i = 0; i < list->_length; i++) {
-        if (!cmp(list->_elems + (i * list->_elemSize), elem)) {
+int arrayList_locate(const ArrayList *list, ListElemComparer cmp, const void *elem, size_t *index) {
+    for (size_t i = 0; i < list->length; i++) {
+        if (!cmp(pointerAdd(list->elems, i * list->elemSize), elem)) {
             *index = i;
             return 0;
         }
     }
-    return -1;
+    return 1;
 }
 
 int arrayList_travel(const ArrayList *list, ListElemVisitor visit) {
-    for (int i = 0; i < list->_length; i++)
-        visit(list->_elems + (i * list->_elemSize));
+    for (size_t i = 0; i < list->length; i++)
+        visit(pointerAdd(list->elems, i * list->elemSize));
 
     return 0;
 }
 
 int arrayList_clear(ArrayList *list) {
-    free(list->_elems);
-    list->_elems = NULL;
-    list->_length = list->_capacity = 0;
+    free(list->elems);
+    list->elems = NULL;
+    list->length = list->capacity = 0;
     return 0;
 }
 
 int arrayList_rpop(ArrayList *list, void *elem) {
-    return arrayList_getDel(list, list->_length - 1, elem);
+    return arrayList_getDel(list, list->length - 1, elem);
 }
 
 int arrayList_lpush(ArrayList *list, const void *elem) {
@@ -155,40 +136,49 @@ int arrayList_lpush(ArrayList *list, const void *elem) {
 }
 
 int arrayList_rpush(ArrayList *list, const void *elem) {
-    return arrayList_insert(list, list->_length, elem);
+    return arrayList_insert(list, list->length, elem);
 }
 
 int arrayList_lpop(ArrayList *list, void *elem) {
     return arrayList_getDel(list, 0, elem);
 }
 
-int arrayList_set(const ArrayList *list, int index, const void *elem) {
-    if (index >= list->_length || index < 0)
+int arrayList_set(ArrayList *list, size_t index, const void *elem) {
+    if (index >= list->length)
         return 1;
-    memcpy(list->_elems + index * list->_elemSize, elem, list->_elemSize);
+    memcpy(pointerAdd(list->elems, index * list->elemSize), elem, list->elemSize);
     return 0;
 }
 
-int arrayList_getDel(ArrayList *list, int index, void *elem) {
-    if (index >= list->_length || index < 0)
+int arrayList_getDel(ArrayList *list, size_t index, void *elem) {
+    if (index >= list->length)
         return 1;
-    if (_needReduce(list))
-        return _deallocAndPop(list, index, elem);
-    memcpy(elem, list->_elems + index * list->_elemSize, list->_elemSize);
-    if (list->_length - 1 - index)
-        memmove(list->_elems + index * list->_elemSize, list->_elems + (list->_length - 1) * list->_elemSize,
-                list->_elemSize); // 从index往前移动一位
-    list->_length--;
+
+    // 缩容
+    if (needReduce(list))
+        return deallocAndPop(list, index, elem);
+
+    // 设置元素
+    memcpy(elem, pointerAdd(list->elems, index * list->elemSize), list->elemSize);
+
+    // 从index往前移动一位
+    if (list->length - 1 - index)
+        memmove(pointerAdd(list->elems, index * list->elemSize),
+                pointerAdd(list->elems, (list->length - 1) * list->elemSize),
+                list->elemSize);
+
+    list->length--;
     return 0;
 }
 
-int arrayList_getSet(const ArrayList *list, int index, void *elem) {
-    if (index >= list->_length || index < 0)
+int arrayList_getSet(ArrayList *list, size_t index, void *elem) {
+    if (index >= list->length)
         return 1;
-    void *tmp = malloc(list->_elemSize);
-    memcpy(tmp, list->_elems + index * list->_elemSize, list->_elemSize);  // 复制元素
-    memcpy(list->_elems + index * list->_elemSize, elem, list->_elemSize); // 设置元素
-    memcpy(elem, tmp, list->_elemSize);
+
+    void *tmp = malloc(list->elemSize);
+    memcpy(tmp, pointerAdd(list->elems, index * list->elemSize), list->elemSize);  // 元素先放临时变量中
+    memcpy(pointerAdd(list->elems, index * list->elemSize), elem, list->elemSize); // 设置元素
+    memcpy(elem, tmp, list->elemSize);
     free(tmp);
     return 0;
 }
@@ -196,17 +186,85 @@ int arrayList_getSet(const ArrayList *list, int index, void *elem) {
 int arrayList_fprint(const ArrayList *list, FILE *f, ListElemToString str, size_t sizeOfElem) {
     fprintf(f, "[");
     char s[sizeOfElem + 1];
-    for (int i = 0; i < list->_length - 1; i++) {
-        size_t len = str(list->_elems + i * list->_elemSize, s);
-        s[len] = '\000';
+    for (size_t i = 0; i < list->length - 1 && list->length; i++) {
+        size_t len = str(pointerAdd(list->elems, i * list->elemSize), s);
+        s[len] = '\0';
         fprintf(f, "%s, ", s);
     }
-    if (list->_length > 0) {
-        size_t len = str(list->_elems + (list->_length - 1) * list->_elemSize, s);
-        s[len] = '\000';
+    if (list->length) {
+        size_t len = str(pointerAdd(list->elems, (list->length - 1) * list->elemSize), s);
+        s[len] = '\0';
         fprintf(f, "%s", s);
     }
     fprintf(f, "]");
     fflush(f);
     return 0;
+}
+
+// 判断是否需要缩容
+static _Bool needReduce(ArrayList *list) {
+    return list->length > ExpandThreshold && (list->length * ReduceFactor <= list->capacity);
+}
+
+// 判断是否需要扩容
+static _Bool needExpand(ArrayList *list) {
+    return list->length >= list->capacity;
+}
+
+// 扩容并插入元素
+static int expandAndInsert(ArrayList *list, size_t index, const void *elem) {
+    if (list->capacity < ExpandThreshold)
+        list->capacity += list->capacity + 1;
+    else
+        list->capacity = (size_t) (list->capacity * ExpandFactor);
+
+    void *newElems = malloc(list->elemSize * list->capacity);
+
+    // 复制前段
+    if (index && list->elems != NULL)
+        memcpy(newElems, list->elems, list->elemSize * index);
+
+    // 复制后段
+    if ((list->length - index) && list->elems != NULL)
+        memcpy(pointerAdd(newElems, (index + 1) * list->elemSize),
+               pointerAdd(list->elems, index * list->elemSize),
+               list->elemSize * (list->length - index));
+
+    // 设置新元素
+    memcpy(pointerAdd(newElems, index * list->elemSize), elem, list->elemSize);
+
+    free(list->elems);
+    list->elems = newElems;
+    list->length++;
+
+    return 0;
+}
+
+// 缩容并弹出元素
+static int deallocAndPop(ArrayList *list, size_t index, void *elem) {
+    if (elem != NULL)
+        memcpy(elem, pointerAdd(list->elems, index * list->elemSize), list->elemSize);
+
+    void *newElems = malloc(list->elemSize * (size_t) (list->length * ExpandFactor));
+
+    // 复制前段
+    if (index)
+        memcpy(newElems, list->elems, list->elemSize * index);
+
+    // 复制后段
+    if (list->length - index)
+        memcpy(pointerAdd(newElems, (index + 1) * list->elemSize),
+               pointerAdd(list->elems, index * list->elemSize),
+               list->elemSize * (list->length - index));
+
+    free(list->elems);
+    list->elems = newElems;
+    list->length--;
+    return 0;
+}
+
+static inline void *pointerAdd(void *p1, size_t delta) {
+    unsigned long long ptr = (unsigned long long) p1;
+    ptr += delta;
+    return (void *) ptr;
 }

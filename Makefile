@@ -9,20 +9,25 @@
 # See the Mulan PSL v2 for more details.
 
 .PHONY:
-testall: array_list_test circle_linked_list_test double_linked_list_test linked_list_test polynomial_test static_linked_list_test string_test clean
+testall: array_list_test circle_linked_list_test double_linked_list_test linked_list_test polynomial_test static_linked_list_test string_test stack_test circle_queue_test linked_queue_test clean
 
 %: %.c
-	@echo $^
+	@echo "begin test $^"
 	@gcc -std=c18 --all-warnings --pedantic -finput-charset=utf-8 -fexec-charset=utf-8 $^ -o $@
 	@./$@
+	@echo "end test $^"
 
-polynomial_test: polynomial.c list.c static_linked_list.c double_linked_list.c circle_linked_list.c linked_list.c array_list.c
+polynomial_test: polynomial_test.c list.c static_linked_list.c double_linked_list.c circle_linked_list.c linked_list.c array_list.c
+	@echo "begin test polynomial.c"
 	@gcc -std=c18 --all-warnings --pedantic -finput-charset=utf-8 -fexec-charset=utf-8 $^ -o polynomial_test
 	@./polynomial_test
+	@echo "end test polynomial.c"
 
 list_test: list_test.c static_linked_list.c double_linked_list.c circle_linked_list.c linked_list.c array_list.c
+	@echo "begin test list_test.c"
 	@gcc -std=c18 --all-warnings --pedantic -finput-charset=utf-8 -fexec-charset=utf-8 $^ -o list_test
 	@./list_test
+	@echo "end test list_test.c"
 
 .PHONY:
 clean: 

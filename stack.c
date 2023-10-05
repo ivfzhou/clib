@@ -16,36 +16,68 @@
 
 #include "stack.h"
 
+// 指针算术运算。
+static inline void *pointerAdd(void *p1, size_t delta);
+
+static inline void *pointerMinus(void *p, size_t delta);
+
+static inline unsigned long long pointerDiff(void *p0, void *p1);
+
 void stack_push(Stack *s, const void *elem) {
-    if (s->_top - s->_bottom + s->_sizeOfElem > STACK_SIZE) raise(SIGABRT);
-    memcpy(s->_top, elem, s->_sizeOfElem);
-    s->_top += s->_sizeOfElem;
+    if (stack_isFull(s)) raise(SIGABRT);
+    memcpy(s->top, elem, s->sizeOfElem);
+    s->top = pointerAdd(s->top, s->sizeOfElem);
 }
 
 void stack_pop(Stack *s, void *elem) {
     if (stack_isEmpty(s)) raise(SIGABRT);
-    memcpy(elem, s->_top - s->_sizeOfElem, s->_sizeOfElem);
-    s->_top -= s->_sizeOfElem;
+    memcpy(elem, pointerMinus(s->top, s->sizeOfElem), s->sizeOfElem);
+    s->top = pointerMinus(s->top, s->sizeOfElem);
 }
 
 _Bool stack_isEmpty(const Stack *s) {
-    return s->_bottom == s->_top;
+    return s->bottom == s->top;
 }
 
-Stack *stack_alloc(size_t sizeOfElem) {
+Stack *stack_alloc(size_t sizeOfElem, size_t maxLength) {
     Stack *s = malloc(sizeof(Stack));
-    s->_sizeOfElem = sizeOfElem;
-    s->_bottom = s->_top = malloc(STACK_SIZE);
+    s->sizeOfElem = sizeOfElem;
+    s->length = maxLength;
+    s->bottom = s->top = malloc(maxLength * sizeOfElem);
     return s;
 }
 
 void stack_free(Stack *s) {
-    free(s->_bottom);
+    free(s->bottom);
     free(s);
 }
 
 int stack_peekTop(const Stack *s, void *elem) {
     if (stack_isEmpty(s)) return 1;
-    memcpy(elem, s->_top - s->_sizeOfElem, s->_sizeOfElem);
+    memcpy(elem, pointerMinus(s->top, s->sizeOfElem), s->sizeOfElem);
     return 0;
 }
+
+_Bool stack_isFull(const Stack *s) {
+    return pointerDiff(s->top, s->bottom) >= s->length;
+}
+
+static inline void *pointerAdd(void *p1, size_t delta) {
+    unsigned long long ptr = (unsigned long long) p1;
+    ptr += delta;
+    return (void *) ptr;
+}
+
+static inline void *pointerMinus(void *p, size_t delta) {
+    unsigned long long ptr = (unsigned long long) p;
+    ptr -= delta;
+    return (void *) ptr;
+}
+
+static inline unsigned long long pointerDiff(void *p0, void *p1) {
+    unsigned long long ptr0 = (unsigned long long) p0;
+    unsigned long long ptr1 = (unsigned long long) p1;
+    return ptr0 - ptr1;
+}
+
+

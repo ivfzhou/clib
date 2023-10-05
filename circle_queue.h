@@ -15,11 +15,9 @@
 
 // 环形队列（FILO）
 typedef struct {
-    void *_array;
-    size_t _elemSize;
-    size_t _length;
-    size_t _head;
-    size_t _tail;
+    void *array;
+    size_t elemSize;
+    unsigned long long length, head, tail;
 } CircleQueue;
 
 // 新建一个环形队列。
@@ -30,19 +28,19 @@ typedef struct {
 CircleQueue *circleQueue_alloc(size_t elemSize, size_t queueLength);
 
 // 向队列投递元素。
-// queue环形队列。
-// elem被投递的元素。
-// 返回1：环形队列已满。
+// queue：环形队列。
+// elem：被投递的元素。
 // 时间复杂度：O(1)
 // 空间复杂度：O(1)
+// 返回1：环形队列已满。
 int circleQueue_into(CircleQueue *queue, const void *elem);
 
 // 从环形队列取元素。
 // queue：环形队列。
 // elem：取出元素元素塞入elem中。
-// 返回1：环形队列已空。
 // 时间复杂度：O(1)
 // 空间复杂度：O(1)
+// 返回1：环形队列已空。
 int circleQueue_exit(CircleQueue *queue, void *elem);
 
 // 销毁环形队列。

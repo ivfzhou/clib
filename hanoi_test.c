@@ -14,11 +14,7 @@
 
 #include "stack.c"
 
-void move(Stack *from, Stack *to) {
-    int disk;
-    stack_pop(from, &disk);
-    stack_push(to, &disk);
-}
+static void move(Stack *from, Stack *to);
 
 void hanoi(int disks, Stack *from, Stack *to, Stack *tmp) {
     if (disks == 1) {
@@ -30,11 +26,17 @@ void hanoi(int disks, Stack *from, Stack *to, Stack *tmp) {
     hanoi(disks - 1, tmp, to, from);
 }
 
+static void move(Stack *from, Stack *to) {
+    int disk;
+    stack_pop(from, &disk);
+    stack_push(to, &disk);
+}
+
 int main(void) {
     const int disks = 6;
-    Stack *from = stack_alloc(sizeof(int));
-    Stack *to = stack_alloc(sizeof(int));
-    Stack *tmp = stack_alloc(sizeof(int));
+    Stack *from = stack_alloc(sizeof(int), 256);
+    Stack *to = stack_alloc(sizeof(int), 256);
+    Stack *tmp = stack_alloc(sizeof(int), 256);
     for (int i = disks; i > 0; i--) {
         stack_push(from, &i);
     }

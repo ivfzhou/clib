@@ -19,11 +19,11 @@
 
 #define TEST_LENGTH 500000
 
-static int _intCmp(const void *o1, const void *o2);
+static int intCmp(const void *o1, const void *o2);
 
-static void _intVisitor(void *p);
+static void intVisitor(void *p);
 
-static size_t _intToString(void *elem, char *s);
+static size_t intToString(void *elem, char *s);
 
 int main(void) {
     printf("begin test array list\n");
@@ -32,57 +32,57 @@ int main(void) {
     assert(list);
 
     int elem = 2;
-    int index = 0;
+    size_t index = 0;
     assert(!arrayList_insert(list, index, &elem));
-    arrayList_fprint(list, stdout, _intToString, 1); // [2]
+    arrayList_fprint(list, stdout, intToString, 1); // [2]
     puts("");
 
     elem = 1;
     assert(!arrayList_lpush(list, &elem));
-    arrayList_fprint(list, stdout, _intToString, 1); // [1, 2]
+    arrayList_fprint(list, stdout, intToString, 1); // [1, 2]
     puts("");
 
     elem = 3;
     assert(!arrayList_rpush(list, &elem));
-    arrayList_fprint(list, stdout, _intToString, 1); // [1, 2, 3]
+    arrayList_fprint(list, stdout, intToString, 1); // [1, 2, 3]
     puts("");
 
-    assert(!arrayList_travel(list, _intVisitor));
+    assert(!arrayList_travel(list, intVisitor));
 
     size_t length = arrayList_len(list);
     assert(length == 3);
 
     elem = 4;
     assert(!arrayList_set(list, index, &elem));
-    arrayList_fprint(list, stdout, _intToString, 1); // [4, 2, 3]
+    arrayList_fprint(list, stdout, intToString, 1); // [4, 2, 3]
     puts("");
 
     assert(!arrayList_get(list, index, &elem));
     assert(elem == 4);
 
     elem = 3;
-    assert(!arrayList_locate(list, _intCmp, &elem, &index));
+    assert(!arrayList_locate(list, intCmp, &elem, &index));
     assert(index == 2);
 
     elem = 4;
     assert(!arrayList_getSet(list, index, &elem));
     assert(elem == 3);
-    arrayList_fprint(list, stdout, _intToString, 1); // [4, 2, 4]
+    arrayList_fprint(list, stdout, intToString, 1); // [4, 2, 4]
     puts("");
 
     assert(!arrayList_getDel(list, index, &elem));
     assert(elem == 4);
-    arrayList_fprint(list, stdout, _intToString, 1); // [4, 2]
+    arrayList_fprint(list, stdout, intToString, 1); // [4, 2]
     puts("");
 
     assert(!arrayList_lpop(list, &elem));
     assert(elem == 4);
-    arrayList_fprint(list, stdout, _intToString, 1); // [2]
+    arrayList_fprint(list, stdout, intToString, 1); // [2]
     puts("");
 
     assert(!arrayList_rpop(list, &elem));
     assert(elem == 2);
-    arrayList_fprint(list, stdout, _intToString, 1); // []
+    arrayList_fprint(list, stdout, intToString, 1); // []
     puts("");
 
     srand(time(NULL) + 100);
@@ -102,12 +102,12 @@ int main(void) {
     }
 
     assert(!arrayList_clear(list));
-    assert(!arrayList_free(list));
 
+    arrayList_free(list);
     printf("array list test passed\n");
 }
 
-static int _intCmp(const void *o1, const void *o2) {
+static int intCmp(const void *o1, const void *o2) {
     int *n1 = (int *) o1;
     int *n2 = (int *) o2;
     if (*n1 == *n2)
@@ -115,14 +115,14 @@ static int _intCmp(const void *o1, const void *o2) {
     return o1 > o2 ? 1 : -1;
 }
 
-static void _intVisitor(void *p) {
+static void intVisitor(void *p) {
     static int prev = 1;
     int i = *(int *) p;
     assert(i == prev);
     prev = i + 1;
 }
 
-static size_t _intToString(void *elem, char *s) {
+static size_t intToString(void *elem, char *s) {
     int x = *(int *) elem;
     char buf[12];
     int len = snprintf(buf, 12, "%d", x);

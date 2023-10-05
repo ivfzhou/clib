@@ -13,7 +13,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "string.h"
 #include "string.c"
 
 int main(void) {
@@ -38,6 +37,8 @@ int main(void) {
     assert(string_len(s4) == 16);
     assert(string_compare(s4, s0) == 0);
     assert(string_index(s2, s0) == 13);
+    assert(string_index(s2, string_alloc("")) == 0);
+    assert(string_index(s2, string_alloc("321")) == -1);
     string_free(s);
     string_free(s0);
     string_free(s1);

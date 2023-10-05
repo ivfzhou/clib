@@ -11,6 +11,7 @@
  */
 
 #include <assert.h>
+#include <stdio.h>
 
 #include "linked_queue.c"
 
@@ -27,4 +28,5 @@ int main(void) {
     }
 
     linkedQueue_free(queue);
+    printf("test pass\n");
 }

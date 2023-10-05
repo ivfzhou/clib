@@ -15,37 +15,49 @@
 
 #include <stdlib.h>
 
+// 队列节点。
 typedef struct LinkQueueNode {
-    void *_elem;
-    struct LinkQueueNode *_next;
+    void *elem;
+    struct LinkQueueNode *next;
 } LinkQueueNode;
 
+// 队列。
 typedef struct {
-    LinkQueueNode *_front;
-    LinkQueueNode *_rear;
-    size_t _elemSize;
-    size_t _length;
+    LinkQueueNode *front, *rear;
+    size_t elemSize, length;
 } LinkedQueue;
 
+// 新建队列。
+// elemSize：每个元素占用的字节大小。
 // 时间复杂度：O(1)
 // 空间复杂度：O(1)
 LinkedQueue *linkedQueue_alloc(size_t elemSize);
 
+// 销毁队列。
+// queue：队列。
 // 时间复杂度：O(1)
 // 空间复杂度：O(1)
-void linkedQueue_free(LinkedQueue *);
+void linkedQueue_free(LinkedQueue *queue);
 
+// 元素加入队列。
+// queue：队列。
+// elem：被加入的元素。
 // 时间复杂度：O(1)
 // 空间复杂度：O(1)
-int linkedQueue_into(LinkedQueue *, const void *);
+int linkedQueue_into(LinkedQueue *queue, const void *elem);
 
+// 从队列中取元素。
+// queue：队列。
+// elem：元素值塞入elem中。
 // 时间复杂度：O(1)
 // 空间复杂度：O(1)
-// 1: 队列为空
-int linkedQueue_exit(LinkedQueue *, void *);
+// 返回1: 队列为空
+int linkedQueue_exit(LinkedQueue *queue, void *elem);
 
+// 获取队列中元素个数。
+// queue：队列。
 // 时间复杂度：O(1)
 // 空间复杂度：O(1)
-size_t linkedQueue_len(const LinkedQueue *);
+size_t linkedQueue_len(const LinkedQueue *queue);
 
 #endif //CLIB_LINKED_QUEUE_H

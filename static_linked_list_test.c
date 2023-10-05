@@ -10,22 +10,16 @@
  * See the Mulan PSL v2 for more details.
  */
 
-// StaticStaticLinkedList测试。
-
 #include <assert.h>
 #include <stdio.h>
-#include <string.h>
-#include <time.h>
 
 #include "static_linked_list.c"
 
-#define TEST_LENGTH 1000
+#define TEST_LENGTH 50000
 
-static int _intCmp(const void *o1, const void *o2);
+static int intCmp(const void *o1, const void *o2);
 
-static void _intVisitor(void *p);
-
-static size_t _intToString(void *elem, char *s);
+static void intVisitor(void *p);
 
 int main(void) {
     printf("begin test static linked list\n");
@@ -34,60 +28,43 @@ int main(void) {
     assert(list);
 
     int elem = 2;
-    int index = 0;
+    size_t index = 0;
     assert(!staticLinkedList_insert(list, index, &elem));
-    staticLinkedList_fprint(list, stdout, _intToString, 1); // [2]
-    puts("");
 
     elem = 1;
     assert(!staticLinkedList_lpush(list, &elem));
-    staticLinkedList_fprint(list, stdout, _intToString, 1); // [1, 2]
-    puts("");
 
     elem = 3;
     assert(!staticLinkedList_rpush(list, &elem));
-    staticLinkedList_fprint(list, stdout, _intToString, 1); // [1, 2, 3]
-    puts("");
 
-    assert(!staticLinkedList_travel(list, _intVisitor));
+    assert(!staticLinkedList_travel(list, intVisitor));
 
     size_t length = staticLinkedList_len(list);
     assert(length == 3);
 
     elem = 4;
     assert(!staticLinkedList_set(list, index, &elem));
-    staticLinkedList_fprint(list, stdout, _intToString, 1); // [4, 2, 3]
-    puts("");
 
     assert(!staticLinkedList_get(list, index, &elem));
     assert(elem == 4);
 
     elem = 3;
-    assert(!staticLinkedList_locate(list, _intCmp, &elem, &index));
+    assert(!staticLinkedList_locate(list, intCmp, &elem, &index));
     assert(index == 2);
 
     elem = 4;
     assert(!staticLinkedList_getSet(list, index, &elem));
     assert(elem == 3);
-    staticLinkedList_fprint(list, stdout, _intToString, 1); // [4, 2, 4]
-    puts("");
 
-    assert(!staticLinkedList_getDel(list, index, &elem)); // [4, 2]
+    assert(!staticLinkedList_getDel(list, index, &elem));
     assert(elem == 4);
-    staticLinkedList_fprint(list, stdout, _intToString, 1);
-    puts("");
 
     assert(!staticLinkedList_lpop(list, &elem));
     assert(elem == 4);
-    staticLinkedList_fprint(list, stdout, _intToString, 1); // [2]
-    puts("");
 
     assert(!staticLinkedList_rpop(list, &elem));
     assert(elem == 2);
-    staticLinkedList_fprint(list, stdout, _intToString, 1); // []
-    puts("");
 
-    srand(time(NULL) + 100);
     int res = 0;
     for (int i = 0; i < TEST_LENGTH; i++) {
         elem = i + 1;
@@ -103,13 +80,13 @@ int main(void) {
         assert(!staticLinkedList_del(list, index));
     }
 
-    assert(!staticLinkedList_clear(list));
-    assert(!staticLinkedList_free(list));
+    staticLinkedList_clear(list);
+    staticLinkedList_free(list);
 
     printf("static linked list test passed\n");
 }
 
-static int _intCmp(const void *o1, const void *o2) {
+static int intCmp(const void *o1, const void *o2) {
     int *n1 = (int *) o1;
     int *n2 = (int *) o2;
     if (*n1 == *n2)
@@ -117,17 +94,9 @@ static int _intCmp(const void *o1, const void *o2) {
     return o1 > o2 ? 1 : -1;
 }
 
-static void _intVisitor(void *p) {
+static void intVisitor(void *p) {
     static int prev = 1;
     int i = *(int *) p;
     assert(i == prev);
     prev = i + 1;
-}
-
-static size_t _intToString(void *elem, char *s) {
-    int x = *(int *) elem;
-    char buf[12];
-    int len = snprintf(buf, 12, "%d", x);
-    strncpy(s, buf, len);
-    return len;
 }

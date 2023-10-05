@@ -14,162 +14,125 @@
 
 #include "circle_linked_list.h"
 
-static CircleLinkNode *_newNode(size_t size, const void *elem) {
-    CircleLinkNode *newNode = malloc(sizeof(CircleLinkNode));
-    if (newNode == NULL)
-        return NULL;
-    newNode->_elem = malloc(size);
-    if (newNode->_elem == NULL) {
-        free(newNode);
-        return NULL;
-    }
-    memcpy(newNode->_elem, elem, size);
-    newNode->_next = newNode->_prev = NULL;
-    return newNode;
-}
+// 新建节点。
+static CircleLinkNode *newNode(size_t size, const void *elem);
 
-static CircleLinkNode *_getNode(const CircleLinkedList *list, int index) {
-    CircleLinkNode *node = list->_firstNode;
-    if (index <= list->_length / 2)
-        for (int i = 0; i < index; i++)
-            node = node->_next;
-    else
-        for (int i = list->_length - 1; i >= index; i--)
-            node = node->_prev;
+// 获取节点。
+static CircleLinkNode *getNode(const CircleLinkedList *list, size_t index);
 
-    return node;
-}
-
-static CircleLinkNode *_popNode(CircleLinkedList *list, int index) {
-    CircleLinkNode *node;
-    if (!index) {
-        node = list->_firstNode;
-        list->_firstNode = node->_next;
-        if (list->_firstNode)
-            list->_firstNode->_prev = node->_prev;
-        if (node->_prev)
-            node->_prev->_next = list->_firstNode;
-    } else {
-        node = _getNode(list, index);
-        node->_prev->_next = node->_next;
-        node->_next->_prev = node->_prev;
-    }
-    node->_prev = node->_next = NULL;
-    list->_length--;
-    return node;
-}
+// 取出一个节点。
+static CircleLinkNode *popNode(CircleLinkedList *list, size_t index);
 
 CircleLinkedList *circleLinkedList_alloc(size_t elemSize) {
     CircleLinkedList *list = malloc(sizeof(CircleLinkedList));
-    list->_elemSize = elemSize;
-    list->_length = 0;
-    list->_firstNode = NULL;
+    list->elemSize = elemSize;
+    list->length = 0;
+    list->firstNode = NULL;
     return list;
 }
 
-int circleLinkedList_free(CircleLinkedList *list) {
-    CircleLinkNode *node = list->_firstNode;
-    for (int i = 0; i < list->_length; i++) {
-        CircleLinkNode *next = node->_next;
-        free(node->_elem);
+void circleLinkedList_free(CircleLinkedList *list) {
+    CircleLinkNode *node = list->firstNode;
+    for (size_t i = 0; i < list->length; i++) {
+        CircleLinkNode *next = node->next;
+        free(node->elem);
         free(node);
         node = next;
     }
-    list->_length = list->_elemSize = 0;
-    list->_firstNode = NULL;
+    list->length = list->elemSize = 0;
+    list->firstNode = NULL;
     free(list);
-    return 0;
 }
 
 size_t circleLinkedList_len(const CircleLinkedList *list) {
-    return list->_length;
+    return list->length;
 }
 
-int circleLinkedList_get(const CircleLinkedList *list, int index, void *elem) {
-    if (index >= list->_length || index < 0)
+int circleLinkedList_get(const CircleLinkedList *list, size_t index, void *elem) {
+    if (index >= list->length)
         return 1;
-    CircleLinkNode *node = _getNode(list, index);
-    memcpy(elem, node->_elem, list->_elemSize);
+    CircleLinkNode *node = getNode(list, index);
+    memcpy(elem, node->elem, list->elemSize);
     return 0;
 }
 
-int circleLinkedList_insert(CircleLinkedList *list, int index, const void *elem) {
-    if (index > list->_length || index < 0)
+int circleLinkedList_insert(CircleLinkedList *list, size_t index, const void *elem) {
+    if (index > list->length)
         return 1;
-    CircleLinkNode *newNode = _newNode(list->_elemSize, elem);
-    if (newNode == NULL)
-        return 2;
+    CircleLinkNode *node = newNode(list->elemSize, elem);
 
+    // 在首部插入
     if (!index) {
-        if (!list->_length) {
-            list->_firstNode = newNode;
-            list->_firstNode->_next = list->_firstNode->_prev = list->_firstNode;
+        // 第一个元素
+        if (!list->length) {
+            list->firstNode = node;
+            list->firstNode->next = list->firstNode->prev = list->firstNode;
         } else {
-            CircleLinkNode *lastNode = _getNode(list, list->_length - 1);
-            list->_firstNode->_prev = newNode;
-            newNode->_next = list->_firstNode;
-            newNode->_prev = lastNode;
-            lastNode->_next = newNode;
-            list->_firstNode = newNode;
+            CircleLinkNode *lastNode = getNode(list, list->length - 1);
+            list->firstNode->prev = node;
+            node->next = list->firstNode;
+            node->prev = lastNode;
+            lastNode->next = node;
+            list->firstNode = node;
         }
     } else {
-        CircleLinkNode *node = _getNode(list, index);
-        newNode->_next = node;
-        newNode->_prev = node->_prev;
-        if (node->_prev)
-            node->_prev->_next = newNode;
-        node->_prev = newNode;
+        CircleLinkNode *indexNode = getNode(list, index);
+        node->next = indexNode;
+        node->prev = indexNode->prev;
+        if (indexNode->prev)
+            indexNode->prev->next = node;
+        indexNode->prev = node;
     }
 
-    list->_length++;
+    list->length++;
     return 0;
 }
 
-int circleLinkedList_del(CircleLinkedList *list, int index) {
-    if (index >= list->_length || index < 0)
+int circleLinkedList_del(CircleLinkedList *list, size_t index) {
+    if (index >= list->length)
         return 1;
-    CircleLinkNode *node = _popNode(list, index);
-    free(node->_elem);
+    CircleLinkNode *node = popNode(list, index);
+    free(node->elem);
     free(node);
     return 0;
 }
 
-int circleLinkedList_locate(const CircleLinkedList *list, ListElemComparer cmp, const void *elem, int *index) {
-    CircleLinkNode *node = list->_firstNode;
-    for (int i = 0; i < list->_length; i++) {
-        if (!cmp(node->_elem, elem)) {
+int circleLinkedList_locate(const CircleLinkedList *list, ListElemComparer cmp, const void *elem, size_t *index) {
+    CircleLinkNode *node = list->firstNode;
+    for (size_t i = 0; i < list->length; i++) {
+        if (!cmp(node->elem, elem)) {
             *index = i;
             return 0;
         }
-        node = node->_next;
+        node = node->next;
     }
-    return -1;
+    return 1;
 }
 
 int circleLinkedList_travel(const CircleLinkedList *list, ListElemVisitor visit) {
-    CircleLinkNode *node = list->_firstNode;
-    for (int i = 0; i < list->_length; i++) {
-        visit(node->_elem);
-        node = node->_next;
+    CircleLinkNode *node = list->firstNode;
+    for (size_t i = 0; i < list->length; i++) {
+        visit(node->elem);
+        node = node->next;
     }
     return 0;
 }
 
 int circleLinkedList_clear(CircleLinkedList *list) {
-    CircleLinkNode *node = list->_firstNode;
-    for (int i = 0; i < list->_length; i++) {
-        CircleLinkNode *next = node->_next;
-        free(node->_elem);
+    CircleLinkNode *node = list->firstNode;
+    for (size_t i = 0; i < list->length; i++) {
+        CircleLinkNode *next = node->next;
+        free(node->elem);
         free(node);
         node = next;
     }
-    list->_length = 0;
-    list->_firstNode = NULL;
+    list->length = 0;
+    list->firstNode = NULL;
     return 0;
 }
 
 int circleLinkedList_rpop(CircleLinkedList *list, void *elem) {
-    return circleLinkedList_getDel(list, list->_length - 1, elem);
+    return circleLinkedList_getDel(list, list->length - 1, elem);
 }
 
 int circleLinkedList_lpush(CircleLinkedList *list, const void *elem) {
@@ -177,39 +140,39 @@ int circleLinkedList_lpush(CircleLinkedList *list, const void *elem) {
 }
 
 int circleLinkedList_rpush(CircleLinkedList *list, const void *elem) {
-    return circleLinkedList_insert(list, list->_length, elem);
+    return circleLinkedList_insert(list, list->length, elem);
 }
 
 int circleLinkedList_lpop(CircleLinkedList *list, void *elem) {
     return circleLinkedList_getDel(list, 0, elem);
 }
 
-int circleLinkedList_set(const CircleLinkedList *list, int index, const void *elem) {
-    if (index >= list->_length || index < 0)
+int circleLinkedList_set(CircleLinkedList *list, size_t index, const void *elem) {
+    if (index >= list->length)
         return 1;
-    CircleLinkNode *node = _getNode(list, index);
-    memcpy(node->_elem, elem, list->_elemSize);
+    CircleLinkNode *node = getNode(list, index);
+    memcpy(node->elem, elem, list->elemSize);
     return 0;
 }
 
-int circleLinkedList_getDel(CircleLinkedList *list, int index, void *elem) {
-    if (index >= list->_length || index < 0)
+int circleLinkedList_getDel(CircleLinkedList *list, size_t index, void *elem) {
+    if (index >= list->length)
         return 1;
-    CircleLinkNode *node = _popNode(list, index);
-    memcpy(elem, node->_elem, list->_elemSize);
-    free(node->_elem);
+    CircleLinkNode *node = popNode(list, index);
+    memcpy(elem, node->elem, list->elemSize);
+    free(node->elem);
     free(node);
     return 0;
 }
 
-int circleLinkedList_getSet(const CircleLinkedList *list, int index, void *elem) {
-    if (index >= list->_length || index < 0)
+int circleLinkedList_getSet(CircleLinkedList *list, size_t index, void *elem) {
+    if (index >= list->length)
         return 1;
-    CircleLinkNode *node = _getNode(list, index);
-    void *tmp = malloc(list->_elemSize);
-    memcpy(tmp, node->_elem, list->_elemSize);
-    memcpy(node->_elem, elem, list->_elemSize);
-    memcpy(elem, tmp, list->_elemSize);
+    CircleLinkNode *node = getNode(list, index);
+    void *tmp = malloc(list->elemSize);
+    memcpy(tmp, node->elem, list->elemSize);
+    memcpy(node->elem, elem, list->elemSize);
+    memcpy(elem, tmp, list->elemSize);
     free(tmp);
     return 0;
 }
@@ -217,19 +180,58 @@ int circleLinkedList_getSet(const CircleLinkedList *list, int index, void *elem)
 int circleLinkedList_fprint(const CircleLinkedList *list, FILE *f, ListElemToString str, size_t sizeOfElem) {
     fprintf(f, "[");
     char s[sizeOfElem + 1];
-    CircleLinkNode *node = list->_firstNode;
-    for (int i = 0; i < list->_length - 1; i++) {
-        size_t len = str(node->_elem, s);
-        s[len] = '\000';
+    CircleLinkNode *node = list->firstNode;
+    for (size_t i = 0; i < list->length - 1 && list->length; i++) {
+        size_t len = str(node->elem, s);
+        s[len] = '\0';
         fprintf(f, "%s, ", s);
-        node = node->_next;
+        node = node->next;
     }
-    if (list->_length > 0) {
-        size_t len = str(node->_elem, s);
-        s[len] = '\000';
+    if (list->length) {
+        size_t len = str(node->elem, s);
+        s[len] = '\0';
         fprintf(f, "%s", s);
     }
     fprintf(f, "]");
     fflush(f);
     return 0;
+}
+
+static CircleLinkNode *newNode(size_t size, const void *elem) {
+    CircleLinkNode *newNode = malloc(sizeof(CircleLinkNode));
+    newNode->elem = malloc(size);
+    memcpy(newNode->elem, elem, size);
+    newNode->next = newNode->prev = NULL;
+    return newNode;
+}
+
+static CircleLinkNode *getNode(const CircleLinkedList *list, size_t index) {
+    CircleLinkNode *node = list->firstNode;
+    if (index <= list->length / 2)
+        for (size_t i = 0; i < index; i++)
+            node = node->next;
+    else
+        for (size_t i = list->length - 1; i >= index; i--)
+            node = node->prev;
+
+    return node;
+}
+
+static CircleLinkNode *popNode(CircleLinkedList *list, size_t index) {
+    CircleLinkNode *node;
+    if (!index) {
+        node = list->firstNode;
+        list->firstNode = node->next;
+        if (list->firstNode)
+            list->firstNode->prev = node->prev;
+        if (node->prev)
+            node->prev->next = list->firstNode;
+    } else {
+        node = getNode(list, index);
+        node->prev->next = node->next;
+        node->next->prev = node->prev;
+    }
+    node->prev = node->next = NULL;
+    list->length--;
+    return node;
 }

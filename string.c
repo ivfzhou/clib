@@ -16,7 +16,95 @@
 
 #include "string.h"
 
-static void _generate_kmp_next(const char *p, int next[], size_t len) {
+static void genNext(const char *p, size_t len, int next[]);
+
+String *string_alloc(const char *c) {
+    String *s = malloc(sizeof(String));
+    s->length = strlen(c);
+    if (s->length) s->chars = malloc(sizeof(char) * s->length);
+    else s->chars = NULL;
+    if (s->chars != NULL)
+        memcpy(s->chars, c, sizeof(char) * s->length);
+    return s;
+}
+
+String *string_concat(const String *s1, const String *s2) {
+    String *s = malloc(sizeof(String));
+    s->length = s1->length + s2->length;
+    if (s->length) {
+        s->chars = malloc(sizeof(char) * s->length);
+    } else {
+        s->chars = NULL;
+    }
+    if (s1->length)
+        memcpy(s->chars, s1->chars, s1->length * sizeof(char));
+    if (s2->length)
+        memcpy(s->chars + s1->length, s2->chars, s2->length * sizeof(char));
+    return s;
+}
+
+size_t string_len(const String *s) {
+    return s->length;
+}
+
+long long string_index(const String *s, const String *sub) {
+    if (!sub->length) return 0;
+    int next[sub->length];
+    genNext(sub->chars, sub->length, next);
+    unsigned long long i = 0;
+    long long j = 0;
+    while (i < s->length && j < (long long) sub->length) {
+        if (j < 0 || s->chars[i] == sub->chars[j]) {
+            i++, j++;
+        } else j = next[j];
+    }
+    if (j >= sub->length) return (long long) (i - sub->length);
+    return -1;
+}
+
+String *string_sub(const String *s, long long begin, long long end) {
+    if (begin > (long long) s->length - 1 || end > (long long) s->length)
+        return NULL;
+    if (begin < -(long long) s->length)
+        return NULL;
+    if (end < -(long long) s->length)
+        return NULL;
+    if (begin < 0) {
+        begin += (long long) s->length + 1;
+    }
+    if (end < 0) {
+        end += (long long) s->length + 1;
+    }
+
+    if (end < begin) return NULL;
+
+    String *sub = malloc(sizeof(String));
+    sub->length = end - begin ? end - begin : 1;
+    if (sub->length > 0) {
+        sub->chars = malloc(sizeof(char) * sub->length);
+        memcpy(sub->chars, s->chars + begin, sub->length * sizeof(char));
+    } else sub->chars = NULL;
+    return sub;
+}
+
+void string_free(String *s) {
+    free(s->chars);
+    free(s);
+}
+
+int string_compare(const String *s1, const String *s2) {
+    for (int i = 0; i < s1->length && i < s2->length; i++) {
+        if (s1->chars[i] != s2->chars[i]) return s1->chars[i] - s2->chars[i];
+    }
+    return s1->length > s2->length ? 1 : s1->length == s2->length ? 0 : -1;
+}
+
+int string_fprint(const String *s, FILE *f) {
+    for (int i = 0; i < s->length; i++) fputc(s->chars[i], f);
+    return 0;
+}
+
+static void genNext(const char *p, size_t len, int next[]) {
     int i = 0, j = -1;
     next[0] = -1;
     while (i < len - 1) {
@@ -27,89 +115,4 @@ static void _generate_kmp_next(const char *p, int next[], size_t len) {
             else next[i] = next[j];
         } else j = next[j];
     }
-}
-
-String *string_alloc(const char *c) {
-    String *s = malloc(sizeof(String));
-    s->_length = strlen(c);
-    if (s->_length) s->_chars = malloc(sizeof(char) * s->_length);
-    else s->_chars = NULL;
-    // for (int i = 0; i < s->_length; i++) s->_chars[i] = c[i];
-    if (s->_chars != NULL)
-        memcpy(s->_chars, c, sizeof(char) * s->_length);
-    return s;
-}
-
-String *string_concat(const String *s1, const String *s2) {
-    String *s = malloc(sizeof(String));
-    s->_length = s1->_length + s2->_length;
-    if (s->_length) {
-        s->_chars = malloc(sizeof(char) * s->_length);
-    } else {
-        s->_chars = NULL;
-    }
-    if (s1->_length)
-        memcpy(s->_chars, s1->_chars, s1->_length * sizeof(char));
-    if (s2->_length)
-        memcpy(s->_chars + s1->_length, s2->_chars, s2->_length * sizeof(char));
-    return s;
-}
-
-size_t string_len(const String *s) {
-    return s->_length;
-}
-
-size_t string_index(const String *s, const String *sub) {
-    int next[sub->_length];
-    _generate_kmp_next(sub->_chars, next, sub->_length);
-    long long i = 0, j = 0;
-    while (i < s->_length && j < (long long) sub->_length) {
-        if (j < 0 || s->_chars[i] == sub->_chars[j]) {
-            i++, j++;
-        } else j = next[j];
-    }
-    if (j >= sub->_length) return i - sub->_length;
-    return -1;
-}
-
-String *string_sub(const String *s, long long begin, long long end) {
-    if (begin > (long long) s->_length - 1 || end > (long long) s->_length)
-        return NULL;
-    if (begin < -(long long) s->_length)
-        return NULL;
-    if (end < -(long long) s->_length)
-        return NULL;
-    if (begin < 0) {
-        begin += s->_length + 1;
-    }
-    if (end < 0) {
-        end += s->_length + 1;
-    }
-
-    if (end < begin) return NULL;
-
-    String *sub = malloc(sizeof(String));
-    sub->_length = end - begin ? end - begin : 1;
-    if (sub->_length > 0) {
-        sub->_chars = malloc(sizeof(char) * sub->_length);
-        memcpy(sub->_chars, s->_chars + begin, sub->_length * sizeof(char));
-    } else sub->_chars = NULL;
-    return sub;
-}
-
-void string_free(String *s) {
-    free(s->_chars);
-    free(s);
-}
-
-int string_compare(const String *s1, const String *s2) {
-    for (int i = 0; i < s1->_length && i < s2->_length; i++) {
-        if (s1->_chars[i] != s2->_chars[i]) return s1->_chars[i] - s2->_chars[i];
-    }
-    return s1->_length > s2->_length ? 1 : s1->_length == s2->_length ? 0 : -1;
-}
-
-int string_fprint(const String *s, FILE *f) {
-    for (int i = 0; i < s->_length; i++) fputc(s->_chars[i], f);
-    return 0;
 }

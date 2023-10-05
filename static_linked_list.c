@@ -14,187 +14,119 @@
 
 #include "static_linked_list.h"
 
+// 扩容阈值。
 const static int ExpandThreshold = 256;
 
+// 扩容系数。
 const static long double ExpandFactor = 1.25L;
 
+// 缩容系数。
 const static long double ReduceFactor = 2L;
 
-static _Bool _needReduce(StaticLinkedList *list) {
-    return list->_length > ExpandThreshold && (list->_length * ReduceFactor <= list->_capacity);
-}
+// 指针算术运算。
+static inline void *pointerAdd(void *p1, size_t delta);
 
-static _Bool _needExpand(StaticLinkedList *list) {
-    return list->_length >= list->_capacity;
-}
+static _Bool needReduce(StaticLinkedList *list);
 
-static int _expandAndInsert(StaticLinkedList *list, int index, const void *elem) {
-    if (list->_capacity < ExpandThreshold)
-        list->_capacity += list->_capacity + 1;
-    else
-        list->_capacity = (int) (list->_capacity * ExpandFactor);
+static _Bool needExpand(StaticLinkedList *list);
 
-    void *newElems = malloc(list->_elemSize * list->_capacity);
-    if (newElems == NULL)
-        return 2;
+static int expandAndInsert(StaticLinkedList *list, size_t index, const void *elem);
 
-    unsigned *newIndexed = malloc(sizeof(unsigned) * list->_capacity);
-    if (newIndexed == NULL) {
-        free(newElems);
-        return 2;
-    }
-
-    if (list->_length && list->_elems != NULL)
-        memcpy(newElems, list->_elems, list->_length * list->_elemSize);
-    memcpy(newElems + list->_length * list->_elemSize, elem, list->_elemSize);
-
-    if (index && list->_indexes != NULL)
-        memcpy(newIndexed, list->_indexes, index * sizeof(unsigned));
-    newIndexed[index] = list->_length;
-    if (list->_length - index)
-        memcpy(newIndexed + index + 1, list->_indexes + index, (list->_length - index) * sizeof(unsigned));
-
-    free(list->_elems);
-    free(list->_indexes);
-    list->_elems = newElems;
-    list->_indexes = newIndexed;
-
-    list->_length++;
-    return 0;
-}
-
-static int _reduceAndPop(StaticLinkedList *list, int index, void *elem) {
-    unsigned elemIndex = list->_indexes[index];
-    if (elem != NULL)
-        memcpy(elem, list->_elems + elemIndex * list->_elemSize, list->_elemSize);
-    list->_capacity = (int) (list->_length * ExpandFactor);
-
-    void *newElems = malloc(list->_elemSize * (size_t) list->_capacity);
-    if (newElems == NULL)
-        return 2;
-
-    unsigned *newIndexed = malloc(sizeof(unsigned) * (size_t) list->_capacity);
-    if (newIndexed == NULL) {
-        free(newElems);
-        return 2;
-    }
-
-    if (elemIndex - 1)
-        memcpy(newElems, list->_elems, list->_elemSize * (elemIndex - 1));
-    if (list->_length - index - 1)
-        memcpy(
-                newElems + elemIndex * list->_elemSize,
-                list->_elems + (elemIndex + 1) * list->_elemSize,
-                (list->_length - index - 1) * list->_elemSize);
-
-    if (index)
-        memcpy(newIndexed, list->_indexes, index * sizeof(unsigned));
-    if (list->_length - 1)
-        memcpy(newIndexed + index, list->_indexes + index + 1, (list->_length - 1) * sizeof(unsigned));
-
-    free(list->_elems);
-    free(list->_indexes);
-    list->_indexes = newIndexed;
-    list->_elems = newElems;
-
-    list->_length--;
-    for (int i = 0; i < list->_length; i++)
-        if (list->_indexes[i] > elemIndex)
-            list->_indexes[i]--;
-
-    return 0;
-}
+static int reduceAndPop(StaticLinkedList *list, size_t index, void *elem);
 
 StaticLinkedList *staticLinkedList_alloc(size_t elemSize) {
     StaticLinkedList *list = malloc(sizeof(StaticLinkedList));
-    list->_elemSize = elemSize;
-    list->_indexes = list->_elems = NULL;
-    list->_length = list->_capacity = 0;
+    list->elemSize = elemSize;
+    list->indexes = list->elems = NULL;
+    list->length = list->capacity = 0;
     return list;
 }
 
-int staticLinkedList_free(StaticLinkedList *list) {
-    free(list->_elems);
-    free(list->_indexes);
-    list->_indexes = list->_elems = NULL;
-    list->_length = list->_capacity = 0;
+void staticLinkedList_free(StaticLinkedList *list) {
+    free(list->elems);
+    free(list->indexes);
+    list->indexes = list->elems = NULL;
+    list->length = list->capacity = 0;
     free(list);
-    return 0;
 }
 
 size_t staticLinkedList_len(const StaticLinkedList *list) {
-    return list->_length;
+    return list->length;
 }
 
-int staticLinkedList_get(const StaticLinkedList *list, int index, void *elem) {
-    if (index >= list->_length || index < 0)
+int staticLinkedList_get(const StaticLinkedList *list, size_t index, void *elem) {
+    if (index >= list->length)
         return 1;
-    memcpy(elem, list->_elems + list->_indexes[index] * list->_elemSize, list->_elemSize);
+    memcpy(elem, pointerAdd(list->elems, list->indexes[index] * list->elemSize), list->elemSize);
     return 0;
 }
 
-int staticLinkedList_insert(StaticLinkedList *list, int index, const void *elem) {
-    if (index > list->_length || index < 0)
+int staticLinkedList_insert(StaticLinkedList *list, size_t index, const void *elem) {
+    if (index > list->length)
         return 1;
 
     // 扩容
-    if (_needExpand(list))
-        return _expandAndInsert(list, index, elem);
+    if (needExpand(list))
+        return expandAndInsert(list, index, elem);
 
-    memcpy(list->_elems + list->_length * list->_elemSize, elem, list->_elemSize);
-    if (list->_length - index)
-        memmove(list->_indexes + index + 1, list->_indexes + index, (list->_length - index) * sizeof(unsigned));
-    list->_indexes[index] = list->_length;
-    list->_length++;
+    // 新元素加入到尾部。
+    memcpy(pointerAdd(list->elems, list->length * list->elemSize), elem, list->elemSize);
+
+    // 移动索引。
+    if (list->length - index > 1)
+        memmove(list->indexes + index + 1, list->indexes + index, (list->length - index - 1) * sizeof(unsigned));
+
+    list->indexes[index] = list->length;
+    list->length++;
     return 0;
 }
 
-int staticLinkedList_del(StaticLinkedList *list, int index) {
-    if (index >= list->_length || index < 0)
+int staticLinkedList_del(StaticLinkedList *list, size_t index) {
+    if (index >= list->length)
         return 1;
-    if (_needReduce(list))
-        return _reduceAndPop(list, index, NULL);
-    unsigned elemIndex = list->_indexes[index];
-    if (list->_length - index - 1)
-        memmove(list->_elems + elemIndex * list->_elemSize, list->_elems + (elemIndex + 1) * list->_elemSize,
-                (list->_length - index - 1) * list->_elemSize);
-    if (list->_length - index - 1)
-        memmove(list->_indexes + index, list->_indexes + index + 1, sizeof(unsigned) * (list->_length - index - 1));
-    list->_length--;
-    for (int i = 0; i < list->_length; i++)
-        if (list->_indexes[i] > elemIndex)
-            list->_indexes[i]--;
+    if (needReduce(list))
+        return reduceAndPop(list, index, NULL);
+    unsigned elemIndex = list->indexes[index];
+    if (list->length - elemIndex > 1)
+        memmove(pointerAdd(list->elems, elemIndex * list->elemSize),
+                pointerAdd(list->elems, (elemIndex + 1) * list->elemSize),
+                (list->length - elemIndex - 1) * list->elemSize);
+    if (list->length - index > 1)
+        memmove(list->indexes + index, list->indexes + index + 1, sizeof(unsigned) * (list->length - index - 1));
+    list->length--;
+    for (int i = 0; i < list->length; i++)
+        if (list->indexes[i] > elemIndex)
+            list->indexes[i]--;
     return 0;
 }
 
-int
-staticLinkedList_locate(const StaticLinkedList *list, ListElemComparer cmp, const void *elem, int *index) {
-    for (int i = 0; i < list->_length; i++) {
-        if (!cmp(list->_elems + list->_indexes[i] * list->_elemSize, elem)) {
+int staticLinkedList_locate(const StaticLinkedList *list, ListElemComparer cmp, const void *elem, size_t *index) {
+    for (size_t i = 0; i < list->length; i++) {
+        if (!cmp(pointerAdd(list->elems, list->indexes[i] * list->elemSize), elem)) {
             *index = (int) i;
             return 0;
         }
     }
-    return -1;
+    return 1;
 }
 
 int staticLinkedList_travel(const StaticLinkedList *list, ListElemVisitor visit) {
-    for (int i = 0; i < list->_length - 1; i++)
-        visit(list->_elems + list->_indexes[i] * list->_elemSize);
+    for (size_t i = 0; i < list->length; i++)
+        visit(pointerAdd(list->elems, list->indexes[i] * list->elemSize));
 
     return 0;
 }
 
 int staticLinkedList_clear(StaticLinkedList *list) {
-    free(list->_elems);
-    free(list->_indexes);
-    list->_length = list->_capacity = 0;
-    list->_indexes = list->_elems = NULL;
+    free(list->elems);
+    free(list->indexes);
+    list->length = list->capacity = 0;
+    list->indexes = list->elems = NULL;
     return 0;
 }
 
 int staticLinkedList_rpop(StaticLinkedList *list, void *elem) {
-    return staticLinkedList_getDel(list, list->_length - 1, elem);
+    return staticLinkedList_getDel(list, list->length - 1, elem);
 }
 
 int staticLinkedList_lpush(StaticLinkedList *list, const void *elem) {
@@ -202,46 +134,45 @@ int staticLinkedList_lpush(StaticLinkedList *list, const void *elem) {
 }
 
 int staticLinkedList_rpush(StaticLinkedList *list, const void *elem) {
-    return staticLinkedList_insert(list, list->_length, elem);
+    return staticLinkedList_insert(list, list->length, elem);
 }
 
 int staticLinkedList_lpop(StaticLinkedList *list, void *elem) {
     return staticLinkedList_getDel(list, 0, elem);
 }
 
-int staticLinkedList_set(const StaticLinkedList *list, int index, const void *elem) {
-    if (index < 0 || index >= list->_length)
+int staticLinkedList_set(StaticLinkedList *list, size_t index, const void *elem) {
+    if (index >= list->length)
         return 1;
-    memcpy(list->_elems + list->_indexes[index] * list->_elemSize, elem, list->_elemSize);
+    memcpy(pointerAdd(list->elems, list->indexes[index] * list->elemSize), elem, list->elemSize);
     return 0;
 }
 
-int staticLinkedList_getDel(StaticLinkedList *list, int index, void *elem) {
-    if (index >= list->_length || index < 0)
+int staticLinkedList_getDel(StaticLinkedList *list, size_t index, void *elem) {
+    if (index >= list->length)
         return 1;
-    if (_needReduce(list))
-        return _reduceAndPop(list, index, elem);
-    unsigned elemIndex = list->_indexes[index];
-    memcpy(elem, list->_elems + elemIndex * list->_elemSize, list->_elemSize);
-    if (list->_length - index - 1)
-        memmove(list->_elems + elemIndex * list->_elemSize, list->_elems + (elemIndex + 1) * list->_elemSize,
-                (list->_length - index - 1) * list->_elemSize);
-    if (list->_length - index - 1)
-        memmove(list->_indexes + index, list->_indexes + index + 1, sizeof(unsigned) * (list->_length - index - 1));
-    list->_length--;
-    for (int i = 0; i < list->_length - 1; i++)
-        if (list->_indexes[i] > elemIndex)
-            list->_indexes[i]--;
+    if (needReduce(list))
+        return reduceAndPop(list, index, elem);
+    unsigned elemIndex = list->indexes[index];
+    memcpy(elem, pointerAdd(list->elems, elemIndex * list->elemSize), list->elemSize);
+    if (list->length - elemIndex > 1)
+        memmove(pointerAdd(list->elems, elemIndex * list->elemSize),
+                pointerAdd(list->elems, (elemIndex + 1) * list->elemSize),
+                (list->length - elemIndex - 1) * list->elemSize);
+    if (list->length - index > 1)
+        memmove(list->indexes + index, list->indexes + index + 1, sizeof(unsigned) * (list->length - index - 1));
+    list->length--;
+    for (size_t i = 0; i < list->length; i++)
+        if (list->indexes[i] > elemIndex)
+            list->indexes[i]--;
     return 0;
 }
 
-int staticLinkedList_getSet(const StaticLinkedList *list, int index, void *elem) {
-    void *tmp = malloc(list->_elemSize);
-    if (tmp == NULL)
-        return 2;
-    memcpy(tmp, list->_elems + list->_indexes[index] * list->_elemSize, list->_elemSize);
-    memcpy(list->_elems + list->_indexes[index] * list->_elemSize, elem, list->_elemSize);
-    memcpy(elem, tmp, list->_elemSize);
+int staticLinkedList_getSet(StaticLinkedList *list, size_t index, void *elem) {
+    void *tmp = malloc(list->elemSize);
+    memcpy(tmp, pointerAdd(list->elems, list->indexes[index] * list->elemSize), list->elemSize);
+    memcpy(pointerAdd(list->elems, list->indexes[index] * list->elemSize), elem, list->elemSize);
+    memcpy(elem, tmp, list->elemSize);
     free(tmp);
     return 0;
 }
@@ -249,17 +180,98 @@ int staticLinkedList_getSet(const StaticLinkedList *list, int index, void *elem)
 int staticLinkedList_fprint(const StaticLinkedList *list, FILE *f, ListElemToString str, size_t sizeOfElem) {
     fprintf(f, "[");
     char s[sizeOfElem + 1];
-    for (int i = 0; i < list->_length - 1; i++) {
-        size_t len = str(list->_elems + list->_indexes[i] * list->_elemSize, s);
-        s[len] = '\000';
+    for (size_t i = 0; i < list->length - 1 && list->length; i++) {
+        size_t len = str(pointerAdd(list->elems, list->indexes[i] * list->elemSize), s);
+        s[len] = '\0';
         fprintf(f, "%s, ", s);
     }
-    if (list->_length > 0) {
-        size_t len = str(list->_elems + list->_indexes[list->_length - 1] * list->_elemSize, s);
-        s[len] = '\000';
+    if (list->length > 0) {
+        size_t len = str(pointerAdd(list->elems, list->indexes[list->length - 1] * list->elemSize), s);
+        s[len] = '\0';
         fprintf(f, "%s", s);
     }
     fprintf(f, "]");
     fflush(f);
     return 0;
+}
+
+static _Bool needReduce(StaticLinkedList *list) {
+    return list->length > ExpandThreshold && (list->length * ReduceFactor <= list->capacity);
+}
+
+static _Bool needExpand(StaticLinkedList *list) {
+    return list->length >= list->capacity;
+}
+
+static int expandAndInsert(StaticLinkedList *list, size_t index, const void *elem) {
+    if (list->capacity < ExpandThreshold)
+        list->capacity += list->capacity + 1;
+    else
+        list->capacity = (size_t) (list->capacity * ExpandFactor);
+
+    void *newElems = malloc(list->elemSize * list->capacity);
+    unsigned *newIndexed = malloc(sizeof(unsigned) * list->capacity);
+
+    // 复制元素。
+    if (list->length && list->elems != NULL)
+        memcpy(newElems, list->elems, list->length * list->elemSize);
+
+    // 新元素添加到尾部。
+    memcpy(pointerAdd(newElems, list->length * list->elemSize), elem, list->elemSize);
+
+    if (index && list->indexes != NULL)
+        memcpy(newIndexed, list->indexes, index * sizeof(unsigned));
+    newIndexed[index] = list->length;
+    if (list->length - index)
+        memcpy(newIndexed + index + 1, list->indexes + index, (list->length - index) * sizeof(unsigned));
+
+    free(list->elems);
+    free(list->indexes);
+    list->elems = newElems;
+    list->indexes = newIndexed;
+    list->length++;
+
+    return 0;
+}
+
+static int reduceAndPop(StaticLinkedList *list, size_t index, void *elem) {
+    unsigned elemIndex = list->indexes[index];
+    if (elem != NULL)
+        memcpy(elem, pointerAdd(list->elems, elemIndex * list->elemSize), list->elemSize);
+    list->capacity = (size_t) (list->length * ExpandFactor);
+
+    void *newElems = malloc(list->elemSize * list->capacity);
+    unsigned *newIndexed = malloc(sizeof(unsigned) * list->capacity);
+
+    if (elemIndex > 1)
+        memcpy(newElems, list->elems, list->elemSize * (elemIndex - 1));
+    if (list->length - elemIndex > 1)
+        memcpy(
+                pointerAdd(newElems, elemIndex * list->elemSize),
+                pointerAdd(list->elems, (elemIndex + 1) * list->elemSize),
+                (list->length - elemIndex - 1) * list->elemSize
+        );
+
+    if (index)
+        memcpy(newIndexed, list->indexes, index * sizeof(unsigned));
+    if (list->length - index > 1)
+        memcpy(newIndexed + index, list->indexes + index + 1, (list->length - index - 1) * sizeof(unsigned));
+
+    free(list->elems);
+    free(list->indexes);
+    list->indexes = newIndexed;
+    list->elems = newElems;
+    list->length--;
+
+    for (size_t i = 0; i < list->length; i++)
+        if (list->indexes[i] > elemIndex)
+            list->indexes[i]--;
+
+    return 0;
+}
+
+static inline void *pointerAdd(void *p1, size_t delta) {
+    unsigned long long ptr = (unsigned long long) p1;
+    ptr += delta;
+    return (void *) ptr;
 }

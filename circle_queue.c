@@ -12,40 +12,52 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
+#include <signal.h>
 
 #include "circle_queue.h"
 
+// 指针算术运算。
+static inline void *pointerAdd(void *p1, size_t delta);
+
 CircleQueue *circleQueue_alloc(size_t elemSize, size_t queueLength) {
+    if (queueLength >= ULLONG_MAX) raise(SIGABRT);
     CircleQueue *queue = malloc(sizeof(CircleQueue));
-    queue->_elemSize = elemSize;
-    queue->_length = queueLength;
-    queue->_array = malloc(elemSize * queueLength);
-    queue->_head = queue->_tail = 0;
+    queue->elemSize = elemSize;
+    queue->length = queueLength;
+    queue->array = malloc(elemSize * queueLength);
+    queue->head = queue->tail = 0;
     return queue;
 }
 
 int circleQueue_into(CircleQueue *queue, const void *elem) {
     if (queue == NULL) return 2;
-    if ((queue->_head - queue->_tail) >= queue->_length) return 1;
-    memcpy(queue->_array + (queue->_head % queue->_length) * queue->_elemSize, elem, queue->_elemSize);
-    queue->_head++;
+    if ((queue->head - queue->tail) >= queue->length) return 1;
+    memcpy(pointerAdd(queue->array, (queue->head % queue->length) * queue->elemSize), elem, queue->elemSize);
+    queue->head++;
     return 0;
 }
 
 int circleQueue_exit(CircleQueue *queue, void *elem) {
     if (queue == NULL) return 2;
-    if (queue->_tail == queue->_head) return 1;
-    memcpy(elem, queue->_array + (queue->_tail % queue->_length) * queue->_elemSize, queue->_elemSize);
-    queue->_tail++;
+    if (queue->tail == queue->head) return 1;
+    memcpy(elem, pointerAdd(queue->array, (queue->tail % queue->length) * queue->elemSize), queue->elemSize);
+    queue->tail++;
     return 0;
 }
 
 void circleQueue_free(CircleQueue *queue) {
-    free(queue->_array);
+    free(queue->array);
     free(queue);
 }
 
 size_t circleQueue_len(const CircleQueue *queue) {
     if (queue == NULL) return 0;
-    return queue->_head - queue->_tail;
+    return queue->head - queue->tail;
+}
+
+static inline void *pointerAdd(void *p1, size_t delta) {
+    unsigned long long ptr = (unsigned long long) p1;
+    ptr += delta;
+    return (void *) ptr;
 }

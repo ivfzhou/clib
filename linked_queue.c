@@ -17,59 +17,59 @@
 
 LinkedQueue *linkedQueue_alloc(size_t elemSize) {
     LinkedQueue *q = malloc(sizeof(LinkedQueue));
-    q->_length = 0;
-    q->_front = q->_rear = NULL;
-    q->_elemSize = elemSize;
+    q->length = 0;
+    q->front = q->rear = NULL;
+    q->elemSize = elemSize;
     return q;
 }
 
 void linkedQueue_free(LinkedQueue *q) {
-    LinkQueueNode *node = q->_front;
-    for (int i = 0; i < q->_length; i++) {
-        free(node->_elem);
-        node = node->_next;
+    LinkQueueNode *node = q->front;
+    for (int i = 0; i < q->length; i++) {
+        free(node->elem);
+        node = node->next;
     }
-    q->_length = q->_elemSize = 0;
-    q->_front = q->_rear = NULL;
+    q->length = q->elemSize = 0;
+    q->front = q->rear = NULL;
     free(q);
 }
 
 int linkedQueue_into(LinkedQueue *q, const void *elem) {
     LinkQueueNode *node = malloc(sizeof(LinkQueueNode));
-    node->_elem = malloc(q->_elemSize);
-    node->_next = NULL;
-    memcpy(node->_elem, elem, q->_elemSize);
+    node->elem = malloc(q->elemSize);
+    node->next = NULL;
+    memcpy(node->elem, elem, q->elemSize);
 
-    if (!q->_length) {
-        q->_front = q->_rear = node;
+    if (!q->length) {
+        q->front = q->rear = node;
     } else {
-        q->_front->_next = node;
-        q->_front = node;
+        q->front->next = node;
+        q->front = node;
     }
 
-    q->_length++;
+    q->length++;
     return 0;
 }
 
 int linkedQueue_exit(LinkedQueue *q, void *elem) {
-    if (!q->_length) return 1;
-    memcpy(elem, q->_rear->_elem, q->_elemSize);
+    if (!q->length) return 1;
+    memcpy(elem, q->rear->elem, q->elemSize);
 
-    if (q->_length == 1) {
-        free(q->_front->_elem);
-        free(q->_front);
-        q->_front = q->_rear = NULL;
+    if (q->length == 1) {
+        free(q->front->elem);
+        free(q->front);
+        q->front = q->rear = NULL;
     } else {
-        LinkQueueNode *node = q->_rear->_next;
-        free(q->_rear->_elem);
-        free(q->_rear);
-        q->_rear = node;
+        LinkQueueNode *node = q->rear->next;
+        free(q->rear->elem);
+        free(q->rear);
+        q->rear = node;
     }
 
-    q->_length--;
+    q->length--;
     return 0;
 }
 
 size_t linkedQueue_len(const LinkedQueue *q) {
-    return q->_length;
+    return q->length;
 }

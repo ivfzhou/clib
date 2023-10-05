@@ -18,9 +18,9 @@
 
 #define TEST_LENGTH 40000
 
-static int _intCmp(const void *o1, const void *o2);
+static int intCmp(const void *o1, const void *o2);
 
-static void _intVisitor(void *p);
+static void intVisitor(void *p);
 
 static void testListImpl(ListImplType);
 
@@ -57,50 +57,42 @@ static void testListImpl(ListImplType type) {
     assert(list);
 
     int elem = 2;
-    int index = 0;
+    size_t index = 0;
     assert(!list_insert(list, index, &elem));
-    // list_fprint(list, stdout, _intToString, 1); // [2]
 
     elem = 1;
     assert(!list_lpush(list, &elem));
-    // list_fprint(list, stdout, _intToString, 1); // [1, 2]
 
     elem = 3;
     assert(!list_rpush(list, &elem));
-    // list_fprint(list, stdout, _intToString, 1); // [1, 2, 3]
 
-    assert(!list_travel(list, _intVisitor));
+    assert(!list_travel(list, intVisitor));
 
     size_t length = list_len(list);
     assert(length == 3);
 
     elem = 4;
     assert(!list_set(list, index, &elem));
-    // list_fprint(list, stdout, _intToString, 1); // [4, 2, 3]
 
     assert(!list_get(list, index, &elem));
     assert(elem == 4);
 
     elem = 3;
-    assert(!list_locate(list, _intCmp, &elem, &index));
+    assert(!list_locate(list, intCmp, &elem, &index));
     assert(index == 2);
 
     elem = 4;
     assert(!list_getSet(list, index, &elem));
     assert(elem == 3);
-    // list_fprint(list, stdout, _intToString, 1); // [4, 2, 4]
 
     assert(!list_getDel(list, index, &elem));
     assert(elem == 4);
-    // list_fprint(list, stdout, _intToString, 1); // [4, 2]
 
     assert(!list_lpop(list, &elem));
     assert(elem == 4);
-    // list_fprint(list, stdout, _intToString, 1); // [2]
 
     assert(!list_rpop(list, &elem));
     assert(elem == 2);
-    // list_fprint(list, stdout, _intToString, 1); // []
 
     int res = 0;
     for (int i = 0; i < TEST_LENGTH; i++) {
@@ -117,11 +109,11 @@ static void testListImpl(ListImplType type) {
         assert(!list_del(list, index));
     }
 
-    assert(!list_clear(list));
-    assert(!list_free(list));
+    list_clear(list);
+    list_free(list);
 }
 
-static int _intCmp(const void *o1, const void *o2) {
+static int intCmp(const void *o1, const void *o2) {
     int *n1 = (int *) o1;
     int *n2 = (int *) o2;
     if (*n1 == *n2)
@@ -129,7 +121,7 @@ static int _intCmp(const void *o1, const void *o2) {
     return o1 > o2 ? 1 : -1;
 }
 
-static void _intVisitor(void *p) {
+static void intVisitor(void *p) {
     int i = *(int *) p;
     assert(i > 0);
 }

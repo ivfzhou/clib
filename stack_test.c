@@ -13,11 +13,10 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "stack.h"
 #include "stack.c"
 
 int main(void) {
-    Stack *s = stack_alloc(sizeof(int));
+    Stack *s = stack_alloc(sizeof(int), 10);
     assert(s);
     assert(stack_isEmpty(s));
     int elem = 1;
