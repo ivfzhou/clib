@@ -26,8 +26,8 @@ int main(void) {
     String *s2 = string_alloc("abcdefj123456dlkasj9fhsafbv93");
     assert(s2);
     assert(string_compare(s1, s2) == 0);
-    string_fprint(s2, stdout);
-    puts("");
+    // string_fprint(s2, stdout);
+    // puts("");
     String *s3 = string_sub(s2, 0, 13);
     assert(s3);
     assert(string_len(s3) == 13);
@@ -51,6 +51,4 @@ int main(void) {
     assert(string_index(s, s1) == 3);
     string_free(s);
     string_free(s1);
-
-    puts("test pass");
 }

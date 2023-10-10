@@ -166,5 +166,4 @@ int main(void) {
     assert(expression_calculate("(1+3)*4") == 16);
     assert(expression_calculate("((1+3)/2)*4") == 8);
     assert(expression_calculate("((1+3)/2)*(4-2)") == 4);
-    printf("test pass\n");
 }

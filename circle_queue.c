@@ -17,8 +17,7 @@
 
 #include "circle_queue.h"
 
-// 指针算术运算。
-static inline void *pointerAdd(void *p1, size_t delta);
+extern void *pointerAdd(void *p1, size_t delta);
 
 CircleQueue *circleQueue_alloc(size_t elemSize, size_t queueLength) {
     if (queueLength >= ULLONG_MAX) raise(SIGABRT);
@@ -54,10 +53,4 @@ void circleQueue_free(CircleQueue *queue) {
 size_t circleQueue_len(const CircleQueue *queue) {
     if (queue == NULL) return 0;
     return queue->head - queue->tail;
-}
-
-static inline void *pointerAdd(void *p1, size_t delta) {
-    unsigned long long ptr = (unsigned long long) p1;
-    ptr += delta;
-    return (void *) ptr;
 }

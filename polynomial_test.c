@@ -237,13 +237,13 @@ int main() {
                                        });
 
     Polynomial *poly1 = polynomial_add(poly, poly0);
-    polynomial_fprint(poly1, stdout);
+    // polynomial_fprint(poly1, stdout);
 
     Polynomial *poly2 = polynomial_multiply(poly, poly0);
-    polynomial_fprint(poly2, stdout);
+    // polynomial_fprint(poly2, stdout);
 
     Polynomial *poly3 = polynomial_subtract(poly, poly0);
-    polynomial_fprint(poly3, stdout);
+    // polynomial_fprint(poly3, stdout);
 
     polynomial_free(poly);
     polynomial_free(poly0);

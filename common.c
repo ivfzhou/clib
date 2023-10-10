@@ -10,22 +10,22 @@
  * See the Mulan PSL v2 for more details.
  */
 
-#include <assert.h>
-#include <stdio.h>
+#include <stdlib.h>
 
-#include "linked_queue.c"
+void *pointerAdd(void *p1, size_t delta) {
+    unsigned long long ptr = (unsigned long long) p1;
+    ptr += delta;
+    return (void *) ptr;
+}
 
-int main(void) {
-    LinkedQueue *queue = linkedQueue_alloc(sizeof(int));
-    assert(queue);
+void *pointerMinus(void *p, size_t delta) {
+    unsigned long long ptr = (unsigned long long) p;
+    ptr -= delta;
+    return (void *) ptr;
+}
 
-    for (int i = 100; i > 0; i--) assert(!linkedQueue_into(queue, &i));
-    assert(linkedQueue_len(queue) == 100);
-    for (int i = 100; i > 0; i--) {
-        int tmp;
-        assert(!linkedQueue_exit(queue, &tmp));
-        assert(tmp == i);
-    }
-
-    linkedQueue_free(queue);
+unsigned long long pointerDiff(void *p0, void *p1) {
+    unsigned long long ptr0 = (unsigned long long) p0;
+    unsigned long long ptr1 = (unsigned long long) p1;
+    return ptr0 - ptr1;
 }

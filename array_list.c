@@ -35,8 +35,7 @@ static int expandAndInsert(ArrayList *list, size_t index, const void *elem);
 // 缩容并弹出元素
 static int deallocAndPop(ArrayList *list, size_t index, void *elem);
 
-// 指针算术运算。
-static inline void *pointerAdd(void *p1, size_t delta);
+extern void *pointerAdd(void *p1, size_t delta);
 
 ArrayList *arrayList_alloc(size_t elemSize) {
     ArrayList *list = malloc(sizeof(ArrayList));
@@ -261,10 +260,4 @@ static int deallocAndPop(ArrayList *list, size_t index, void *elem) {
     list->elems = newElems;
     list->length--;
     return 0;
-}
-
-static inline void *pointerAdd(void *p1, size_t delta) {
-    unsigned long long ptr = (unsigned long long) p1;
-    ptr += delta;
-    return (void *) ptr;
 }

@@ -25,31 +25,32 @@ static void intVisitor(void *p);
 static void testListImpl(ListImplType);
 
 int main(void) {
-    printf("begin test list\n");
     time_t now = time(NULL);
 
     srand(now + 100);
-    time_t begin = time(NULL);
+    // time_t begin = time(NULL);
     testListImpl(ListImplType_Array);
-    printf("array list cost %fs\n", difftime(time(NULL), begin));
-    srand(now + 100);
-    begin = time(NULL);
-    testListImpl(ListImplType_DoubleLinked);
-    printf("double linked list cost %fs\n", difftime(time(NULL), begin));
-    srand(now + 100);
-    begin = time(NULL);
-    testListImpl(ListImplType_CircleLinked);
-    printf("circle linked list cost %fs\n", difftime(time(NULL), begin));
-    srand(now + 100);
-    begin = time(NULL);
-    testListImpl(ListImplType_Linked);
-    printf("linked list cost %fs\n", difftime(time(NULL), begin));
-    srand(now + 100);
-    begin = time(NULL);
-    testListImpl(ListImplType_StaticLinked);
-    printf("static linked list cost %fs\n", difftime(time(NULL), begin));
+    // printf("array list cost %fs\n", difftime(time(NULL), begin));
 
-    printf("list test passed\n");
+    srand(now + 100);
+    // begin = time(NULL);
+    testListImpl(ListImplType_DoubleLinked);
+    // printf("double linked list cost %fs\n", difftime(time(NULL), begin));
+
+    srand(now + 100);
+    // begin = time(NULL);
+    testListImpl(ListImplType_CircleLinked);
+    // printf("circle linked list cost %fs\n", difftime(time(NULL), begin));
+
+    srand(now + 100);
+    // begin = time(NULL);
+    testListImpl(ListImplType_Linked);
+    // printf("linked list cost %fs\n", difftime(time(NULL), begin));
+
+    srand(now + 100);
+    // begin = time(NULL);
+    testListImpl(ListImplType_StaticLinked);
+    // printf("static linked list cost %fs\n", difftime(time(NULL), begin));
 }
 
 static void testListImpl(ListImplType type) {

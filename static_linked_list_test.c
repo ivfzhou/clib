@@ -22,8 +22,6 @@ static int intCmp(const void *o1, const void *o2);
 static void intVisitor(void *p);
 
 int main(void) {
-    printf("begin test static linked list\n");
-
     StaticLinkedList *list = staticLinkedList_alloc(sizeof(int));
     assert(list);
 
@@ -82,8 +80,6 @@ int main(void) {
 
     staticLinkedList_clear(list);
     staticLinkedList_free(list);
-
-    printf("static linked list test passed\n");
 }
 
 static int intCmp(const void *o1, const void *o2) {

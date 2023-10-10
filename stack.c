@@ -16,12 +16,11 @@
 
 #include "stack.h"
 
-// 指针算术运算。
-static inline void *pointerAdd(void *p1, size_t delta);
+extern void *pointerAdd(void *p1, size_t delta);
 
-static inline void *pointerMinus(void *p, size_t delta);
+extern void *pointerMinus(void *p, size_t delta);
 
-static inline unsigned long long pointerDiff(void *p0, void *p1);
+extern unsigned long long pointerDiff(void *p0, void *p1);
 
 void stack_push(Stack *s, const void *elem) {
     if (stack_isFull(s)) raise(SIGABRT);
@@ -61,23 +60,3 @@ int stack_peekTop(const Stack *s, void *elem) {
 _Bool stack_isFull(const Stack *s) {
     return pointerDiff(s->top, s->bottom) >= s->length;
 }
-
-static inline void *pointerAdd(void *p1, size_t delta) {
-    unsigned long long ptr = (unsigned long long) p1;
-    ptr += delta;
-    return (void *) ptr;
-}
-
-static inline void *pointerMinus(void *p, size_t delta) {
-    unsigned long long ptr = (unsigned long long) p;
-    ptr -= delta;
-    return (void *) ptr;
-}
-
-static inline unsigned long long pointerDiff(void *p0, void *p1) {
-    unsigned long long ptr0 = (unsigned long long) p0;
-    unsigned long long ptr1 = (unsigned long long) p1;
-    return ptr0 - ptr1;
-}
-
-

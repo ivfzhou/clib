@@ -45,9 +45,9 @@ int main(void) {
     int disk;
     for (int i = 0; i < disks; i++) {
         stack_pop(to, &disk);
-        printf("%d ", disk);
+        // printf("%d ", disk);
     }
-    puts("");
+    // puts("");
 
     stack_free(from);
     stack_free(to);

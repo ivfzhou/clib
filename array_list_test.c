@@ -23,29 +23,27 @@ static int intCmp(const void *o1, const void *o2);
 
 static void intVisitor(void *p);
 
-static size_t intToString(void *elem, char *s);
+// static size_t intToString(void *elem, char *s);
 
 int main(void) {
-    printf("begin test array list\n");
-
     ArrayList *list = arrayList_alloc(sizeof(int));
     assert(list);
 
     int elem = 2;
     size_t index = 0;
     assert(!arrayList_insert(list, index, &elem));
-    arrayList_fprint(list, stdout, intToString, 1); // [2]
-    puts("");
+    // arrayList_fprint(list, stdout, intToString, 1); // [2]
+    // puts("");
 
     elem = 1;
     assert(!arrayList_lpush(list, &elem));
-    arrayList_fprint(list, stdout, intToString, 1); // [1, 2]
-    puts("");
+    // arrayList_fprint(list, stdout, intToString, 1); // [1, 2]
+    // puts("");
 
     elem = 3;
     assert(!arrayList_rpush(list, &elem));
-    arrayList_fprint(list, stdout, intToString, 1); // [1, 2, 3]
-    puts("");
+    // arrayList_fprint(list, stdout, intToString, 1); // [1, 2, 3]
+    // puts("");
 
     assert(!arrayList_travel(list, intVisitor));
 
@@ -54,8 +52,8 @@ int main(void) {
 
     elem = 4;
     assert(!arrayList_set(list, index, &elem));
-    arrayList_fprint(list, stdout, intToString, 1); // [4, 2, 3]
-    puts("");
+    // arrayList_fprint(list, stdout, intToString, 1); // [4, 2, 3]
+    // puts("");
 
     assert(!arrayList_get(list, index, &elem));
     assert(elem == 4);
@@ -67,23 +65,23 @@ int main(void) {
     elem = 4;
     assert(!arrayList_getSet(list, index, &elem));
     assert(elem == 3);
-    arrayList_fprint(list, stdout, intToString, 1); // [4, 2, 4]
-    puts("");
+    // arrayList_fprint(list, stdout, intToString, 1); // [4, 2, 4]
+    // puts("");
 
     assert(!arrayList_getDel(list, index, &elem));
     assert(elem == 4);
-    arrayList_fprint(list, stdout, intToString, 1); // [4, 2]
-    puts("");
+    // arrayList_fprint(list, stdout, intToString, 1); // [4, 2]
+    // puts("");
 
     assert(!arrayList_lpop(list, &elem));
     assert(elem == 4);
-    arrayList_fprint(list, stdout, intToString, 1); // [2]
-    puts("");
+    // arrayList_fprint(list, stdout, intToString, 1); // [2]
+    // puts("");
 
     assert(!arrayList_rpop(list, &elem));
     assert(elem == 2);
-    arrayList_fprint(list, stdout, intToString, 1); // []
-    puts("");
+    // arrayList_fprint(list, stdout, intToString, 1); // []
+    // puts("");
 
     srand(time(NULL) + 100);
     int res = 0;
@@ -104,7 +102,6 @@ int main(void) {
     assert(!arrayList_clear(list));
 
     arrayList_free(list);
-    printf("array list test passed\n");
 }
 
 static int intCmp(const void *o1, const void *o2) {
@@ -122,10 +119,10 @@ static void intVisitor(void *p) {
     prev = i + 1;
 }
 
-static size_t intToString(void *elem, char *s) {
+/*static size_t intToString(void *elem, char *s) {
     int x = *(int *) elem;
     char buf[12];
     int len = snprintf(buf, 12, "%d", x);
     strncpy(s, buf, len);
     return len;
-}
+}*/

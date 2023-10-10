@@ -23,8 +23,7 @@ const static long double ExpandFactor = 1.25L;
 // 缩容系数。
 const static long double ReduceFactor = 2L;
 
-// 指针算术运算。
-static inline void *pointerAdd(void *p1, size_t delta);
+extern void *pointerAdd(void *p1, size_t delta);
 
 static _Bool needReduce(StaticLinkedList *list);
 
@@ -268,10 +267,4 @@ static int reduceAndPop(StaticLinkedList *list, size_t index, void *elem) {
             list->indexes[i]--;
 
     return 0;
-}
-
-static inline void *pointerAdd(void *p1, size_t delta) {
-    unsigned long long ptr = (unsigned long long) p1;
-    ptr += delta;
-    return (void *) ptr;
 }

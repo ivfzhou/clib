@@ -24,29 +24,27 @@ static int intCmp(const void *o1, const void *o2);
 
 static void intVisitor(void *p);
 
-static size_t intToString(void *elem, char *s);
+// static size_t intToString(void *elem, char *s);
 
 int main(void) {
-    printf("begin test linked list\n");
-
     LinkedList *list = linkedList_alloc(sizeof(int));
     assert(list);
 
     int elem = 2;
     size_t index = 0;
     assert(!linkedList_insert(list, index, &elem));
-    linkedList_fprint(list, stdout, intToString, 1); // [2]
-    puts("");
+    // linkedList_fprint(list, stdout, intToString, 1); // [2]
+    // puts("");
 
     elem = 1;
     assert(!linkedList_lpush(list, &elem));
-    linkedList_fprint(list, stdout, intToString, 1); // [1, 2]
-    puts("");
+    // linkedList_fprint(list, stdout, intToString, 1); // [1, 2]
+    // puts("");
 
     elem = 3;
     assert(!linkedList_rpush(list, &elem));
-    linkedList_fprint(list, stdout, intToString, 1); // [1, 2, 3]
-    puts("");
+    // linkedList_fprint(list, stdout, intToString, 1); // [1, 2, 3]
+    // puts("");
 
     assert(!linkedList_travel(list, intVisitor));
 
@@ -55,8 +53,8 @@ int main(void) {
 
     elem = 4;
     assert(!linkedList_set(list, index, &elem));
-    linkedList_fprint(list, stdout, intToString, 1); // [4, 2, 3]
-    puts("");
+    // linkedList_fprint(list, stdout, intToString, 1); // [4, 2, 3]
+    // puts("");
 
     assert(!linkedList_get(list, index, &elem));
     assert(elem == 4);
@@ -68,23 +66,23 @@ int main(void) {
     elem = 4;
     assert(!linkedList_getSet(list, index, &elem));
     assert(elem == 3);
-    linkedList_fprint(list, stdout, intToString, 1); // [4, 2, 4]
-    puts("");
+    // linkedList_fprint(list, stdout, intToString, 1); // [4, 2, 4]
+    // puts("");
 
     assert(!linkedList_getDel(list, index, &elem));
     assert(elem == 4);
-    linkedList_fprint(list, stdout, intToString, 1); // [4, 2]
-    puts("");
+    // linkedList_fprint(list, stdout, intToString, 1); // [4, 2]
+    // puts("");
 
     assert(!linkedList_lpop(list, &elem));
     assert(elem == 4);
-    linkedList_fprint(list, stdout, intToString, 1); // [2]
-    puts("");
+    // linkedList_fprint(list, stdout, intToString, 1); // [2]
+    // puts("");
 
     assert(!linkedList_rpop(list, &elem));
     assert(elem == 2);
-    linkedList_fprint(list, stdout, intToString, 1); // []
-    puts("");
+    // linkedList_fprint(list, stdout, intToString, 1); // []
+    // puts("");
 
     srand(time(NULL) + 100);
     int res = 0;
@@ -105,7 +103,6 @@ int main(void) {
     assert(!linkedList_clear(list));
 
     linkedList_free(list);
-    printf("linked list test passed\n");
 }
 
 static int intCmp(const void *o1, const void *o2) {
@@ -123,10 +120,10 @@ static void intVisitor(void *p) {
     prev = i + 1;
 }
 
-static size_t intToString(void *elem, char *s) {
+/*static size_t intToString(void *elem, char *s) {
     int x = *(int *) elem;
     char buf[12];
     int len = snprintf(buf, 12, "%d", x);
     strncpy(s, buf, len);
     return len;
-}
+}*/

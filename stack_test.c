@@ -31,5 +31,4 @@ int main(void) {
     assert(elem == 1);
     assert(stack_isEmpty(s));
     stack_free(s);
-    puts("test pass");
 }

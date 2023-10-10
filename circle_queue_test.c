@@ -16,7 +16,6 @@
 #include "circle_queue.c"
 
 int main(void) {
-    printf("begin test circle_queue\n");
     CircleQueue *queue = circleQueue_alloc(sizeof(int), 10);
     int elem;
     for (int i = 0; i < 10; i++) {
@@ -33,5 +32,4 @@ int main(void) {
     }
     assert(circleQueue_exit(queue, &elem) == 1);
     circleQueue_free(queue);
-    printf("test circle_queue pass\n");
 }
