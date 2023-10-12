@@ -37,14 +37,18 @@ int main(void) {
     assert(string_len(s4) == 16);
     assert(string_compare(s4, s0) == 0);
     assert(string_index(s2, s0) == 13);
-    assert(string_index(s2, string_alloc("")) == 0);
-    assert(string_index(s2, string_alloc("321")) == -1);
+    String *s5 = string_alloc("");
+    assert(string_index(s2, s5) == 0);
+    String *s6 = string_alloc("321");
+    assert(string_index(s2, s6) == -1);
     string_free(s);
     string_free(s0);
     string_free(s1);
     string_free(s2);
     string_free(s3);
     string_free(s4);
+    string_free(s5);
+    string_free(s6);
 
     s = string_alloc("abccbakkdiur");
     s1 = string_alloc("cba");

@@ -21,10 +21,10 @@ static void genNext(const char *p, size_t len, int next[]);
 String *string_alloc(const char *c) {
     String *s = malloc(sizeof(String));
     s->length = strlen(c);
-    if (s->length) s->chars = malloc(sizeof(char) * s->length);
-    else s->chars = NULL;
-    if (s->chars != NULL)
+    if (s->length) {
+        s->chars = malloc(sizeof(char) * s->length);
         memcpy(s->chars, c, sizeof(char) * s->length);
+    } else s->chars = NULL;
     return s;
 }
 
