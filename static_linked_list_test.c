@@ -77,6 +77,19 @@ int main(void) {
         index = rand() % length;
         assert(!staticLinkedList_del(list, index));
     }
+    for (int i = 0; i < TEST_LENGTH; i++) {
+        elem = i + 1;
+        length = staticLinkedList_len(list);
+        index = rand() % (length + 1u);
+        assert(!staticLinkedList_insert(list, index, &elem));
+        assert(!staticLinkedList_get(list, index, &res));
+        assert(res == elem);
+    }
+    for (int i = 0; i < TEST_LENGTH; i++) {
+        length = staticLinkedList_len(list);
+        index = rand() % length;
+        assert(!staticLinkedList_getDel(list, index, &elem));
+    }
 
     staticLinkedList_clear(list);
     staticLinkedList_free(list);

@@ -72,10 +72,10 @@ int staticLinkedList_insert(StaticLinkedList *list, size_t index, const void *el
     memcpy(pointerAdd(list->elems, list->length * list->elemSize), elem, list->elemSize);
 
     // 移动索引。
-    if (list->length - index > 1)
-        memmove(list->indexes + index + 1, list->indexes + index, (list->length - index - 1) * sizeof(unsigned));
-
+    if (list->length - index > 0)
+        memmove(list->indexes + index + 1, list->indexes + index, (list->length - index) * sizeof(unsigned));
     list->indexes[index] = list->length;
+
     list->length++;
     return 0;
 }
