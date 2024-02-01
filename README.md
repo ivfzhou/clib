@@ -3,18 +3,15 @@
 数据结构实现：
 线性表：顺序实现、单/双/环链式实现、静态实现、字符串、KMP模式匹配算法、栈、队列。
 
-`测试`
-
+测试
 ```shell
-make clean alltest
+make testall
 ```
 
-线性表
-
+线性表实现
 ```shell
-gcc list.c array_list.c linked_list.c double_linked_list.c static_linked_list.c circle_linked_list.c string.c stack.c
+list.c array_list.c linked_list.c double_linked_list.c static_linked_list.c circle_linked_list.c string.c stack.c
 ```
-
 ```c
 #include "list.h"
 ListImplType_Array, // 数组实现（推荐）
